@@ -1,4 +1,5 @@
 (ns app)
 
-(.log js/console "HI")
-(.alert js/window "yel")
+(defn main []
+  (.log js/console "HI"))
+

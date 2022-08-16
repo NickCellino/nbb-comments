@@ -10,12 +10,8 @@
  :nrepl
  {:port 3333}
 
- :dev-http
- {8080 "public"}
-
  :builds
- {:app {:target :browser
-        :output-dir "public/js"
-        :asset-path "js"
-        :modules {:main {:entries [app]}}}}}
+ {:app {:target :node-script
+        :main app/main
+        :output-to "dist/main.js"}}}
  

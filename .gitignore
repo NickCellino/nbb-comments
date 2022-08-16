@@ -26,3 +26,4 @@ gitignore.io help:
 
 .lsp/
 
+dist/

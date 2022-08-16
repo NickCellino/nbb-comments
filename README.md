@@ -8,6 +8,10 @@ npx shadow-cljs watch app
 ```
 
 Then go to browser at localhost:8080.
+Then start node with:
+```bash
+node dist/main.js
+```
 
 Then, start neovim and open CLJS file. Enter command:
 ```
