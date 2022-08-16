@@ -1,0 +1,28 @@
+node_modules/
+public/js
+
+/target
+/checkouts
+/src/gen
+
+pom.xml
+pom.xml.asc
+*.iml
+*.jar
+*.log
+.shadow-cljs
+.idea
+.lein-*
+.nrepl-*
+.DS_Store
+
+.hgignore
+.hg/
+gitignore.io help:
+  list    - lists the operating systems, programming languages and IDE input types
+  :types: - creates .gitignore files for types of operating systems, programming languages or IDEs
+
+.clj-kondo/
+
+.lsp/
+
