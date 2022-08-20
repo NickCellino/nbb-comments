@@ -6,6 +6,7 @@
     "shadow-cljs": "2.19.9"
   },
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.154.0",
     "@aws-sdk/client-s3": "^3.150.0",
     "nbb": "^0.7.132"
   }

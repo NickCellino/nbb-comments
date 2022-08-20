@@ -17,3 +17,9 @@ Then, start neovim and open CLJS file. Enter command:
 ```
 :ConjureShadowSelect app
 ```
+
+## nbb nRepl
+
+```bash
+npx nbb nrepl-server :port 1337
+```

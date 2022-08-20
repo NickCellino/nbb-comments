@@ -1,7 +1,6 @@
 (ns app
   (:require ["@aws-sdk/client-s3" :as s3]
-            [cljs.core.async :refer [go]]
-            [cljs.core.async.interop :refer-macros [<p!]]))
+            [promesa.core :as p]))
 
 
 (defn fetch-file
@@ -19,12 +18,12 @@
         (.on fstream "data" (fn [chunk] (.push chunks chunk)))
         (.on fstream "end" (fn [] (resolve (.toString (.concat js/Buffer chunks) "utf8"))))))))
  
+(.log js/console "hello")
 
 (defn main []
   (.log js/console s3/S3Client)
-  (go
-    (let [s3-response (<p! (fetch-file "quadrant-static" "hello.txt"))
-          contents (<p! (stream-to-string (.-Body s3-response)))]
-      (.log js/console contents))))
- 
+  (p/let [s3-response (fetch-file "olv-static" "olv.png")]
+    (.log js/console (.-Body s3-response))))
+
 (main)
+

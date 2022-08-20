@@ -5,13 +5,14 @@
   "src/test"]
 
  :dependencies
- [[cider/cider-nrepl "0.28.4"]]
+ [[cider/cider-nrepl "0.28.4"]
+  [funcool/promesa "8.0.450"]]
 
  :nrepl
  {:port 3333}
 
  :builds
  {:app {:target :node-script
-        :main app/main
+        :main dynamo/main
         :output-to "dist/main.js"}}}
  
