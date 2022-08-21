@@ -1,6 +1,8 @@
 (ns dynamo
   (:require ["@aws-sdk/client-dynamodb" :as dynamo]
-            [promesa.core :as p]))
+            ["uuid" :as uuid]
+            [promesa.core :as p]
+            [cljs-bean.core :as bean]))
 
 "
 Partition key should be post-id, string
@@ -8,32 +10,47 @@ Sort key should be some kind of unique comment id
 "
 
 (defn create-comment-table
-  [] (let [cmd-input #js {:TableName "BlogComment"
-                          :AttributeDefinitions #js [#js {:AttributeName "PostId"
-                                                          :AttributeType "S"}
-                                                     #js {:AttributeName "CommentId"
-                                                          :AttributeType "S"}]
-                          :KeySchema #js [#js {:KeyType "HASH"
-                                               :AttributeName "PostId"}
-                                          #js {:KeyType "RANGE"
-                                               :AttributeName "CommentId"}]
-                          :ProvisionedThroughput #js {:ReadCapacityUnits 1
-                                                      :WriteCapacityUnits 1}}
-           cmd (dynamo/CreateTableCommand. cmd-input)
+  [] (let [cmd-input {:TableName "BlogComment"
+                      :AttributeDefinitions [{:AttributeName "PostId"
+                                              :AttributeType "S"}
+                                             {:AttributeName "CommentId"
+                                              :AttributeType "S"}]
+                      :KeySchema [{:KeyType "HASH"
+                                   :AttributeName "PostId"}
+                                  {:KeyType "RANGE"
+                                   :AttributeName "CommentId"}]
+                      :ProvisionedThroughput {:ReadCapacityUnits 1
+                                              :WriteCapacityUnits 1}}
+           cmd (dynamo/CreateTableCommand. (bean/->js cmd-input))
            client (dynamo/DynamoDBClient. {:region "us-east-1"})]
         (.send client cmd)))
 
-(defn main [] 4)
+(defn add-dynamo-comment
+  [client post-id comment-id message]
+  (let [cmd-input {:TableName "BlogComment"
+                   :Item {:PostId {:S post-id}
+                          :CommentId {:S comment-id}
+                          :Message {:S message}}}
+        cmd (dynamo/PutItemCommand. (bean/->js cmd-input))]
+    (.send client cmd)))
 
-(def foo #js [1 2 3])
 
-(comment (def result
-            (p/let [r (create-comment-table)]
-              r)))
+(defn add-comment
+  [message]
+  (let [comment-id (uuid/v4)
+        client (dynamo/DynamoDBClient. {:region "us-east-1"})]
+    (p/do!
+      (add-dynamo-comment client "clojure-bandits" comment-id message))))
 
-(comment (.then
-          (create-comment-table)
-          (fn [success] (println "success" success))
-          (fn [error] (println "error" error))))
+(def result (add-comment "hello world"))
 
+(comment
+  (p/let
+    [r (add-comment "is this thing on?")]
+    (def test r))
+  (get-in (bean/->clj test) [:$metadata :httpStatusCode]))
+
+(defn main []
+  (p/let [r (create-comment-table)]
+    r))
 

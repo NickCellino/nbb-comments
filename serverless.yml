@@ -1,0 +1,29 @@
+service: comments-api
+
+provider:
+  name: aws
+  runtime: nodejs16.x
+  region: us-east-1
+  httpApi:
+    cors:
+      allowedOrigins:
+        - https://nickcellino.com
+        - http://localhost:8080
+      allowedHeaders:
+        - hx-trigger
+        - hx-target
+        - hx-request
+        - hx-current-url
+      allowedMethods:
+        - GET
+        - POST
+
+functions:
+
+  comments-api:
+    handler: index.handler
+    events:
+      - httpApi:
+          method: '*'
+          path: /comments/{proxy+}
+

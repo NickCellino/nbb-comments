@@ -2,12 +2,15 @@
   "name": "dynamo-cljs",
   "version": "0.0.1",
   "private": true,
+  "type": "module",
   "devDependencies": {
     "shadow-cljs": "2.19.9"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.154.0",
     "@aws-sdk/client-s3": "^3.150.0",
-    "nbb": "^0.7.132"
+    "nbb": "^0.7.132",
+    "serverless": "^3.22.0",
+    "uuid": "^8.3.2"
   }
 }
