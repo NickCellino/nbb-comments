@@ -13,9 +13,11 @@
   (let [serialized-comments (map serialize-comment comments)]
     [:div {:id "comment-list"} serialized-comments]))
  
-(def comments-form
+(defn comments-form
+  [post-id]
   [:form
    {:id "comment-form" :hx-post "/comments" :hx-swap "afterbegin" :hx-target "#comment-list" :hx-swap-oob "true"}
+   [:input {:type "hidden" :name "post-id" :value post-id}]
    [:label {:for "author"} "Name (optional)"]
    [:input {:type "text" :name "author"}]
    [:label {:for "message"} "Comment"]
@@ -32,4 +34,6 @@
   (html (serialize-comment-list [{:author "Nicholas" :message "hello world!"}
                                  {:message "hello world!"}
                                  {:message "yo"}
-                                 {:message "sup"}])))
+                                 {:message "sup"}]))
+
+  (html (comments-form "clojure-bandits")))
