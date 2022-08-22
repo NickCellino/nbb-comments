@@ -29,6 +29,8 @@
                              (let [comment-input (parse-comment-body (.-body req))]
                                (add-comment comment-input)
                                (.send res (bean/->js (html/serialize-comment comment-input))))))
+    (.get app "/comments-form" (fn [req res]
+                                 (.send res html/comments-form)))
     app))
 
 (defn start-server
