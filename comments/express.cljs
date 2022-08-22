@@ -13,13 +13,21 @@
       (:message body) (assoc :message (:message body))
       (:post-id body) (assoc :post-id (:post-id body)))))
 
+
 (defn create-app
   [add-comment list-comments]
   (let [app (express)]
     (.use app (.urlencoded express #js {:extended true}))
+    (.use app (fn [req res next]
+                (doto res
+                  (.set "Access-Control-Allow-Origin" "http://localhost:8080")
+                  (.set "Access-Control-Allow-Methods" "GET, POST")
+                  (.set "Access-Control-Allow-Headers" "hx-trigger, hx-target, hx-request, hx-current-url"))
+                (next)))
 
     (.get app "/comments" (fn [req res]
-                            (let [comments (list-comments "clojure-bandits")]
+                            (let [post-id (.-post-id (.-query req))
+                                  comments (list-comments post-id)]
                               (.send res (hiccup/html (html/serialize-comment-list comments))))))
 
     (.post app "/comments" (fn [req res]

@@ -16,12 +16,13 @@
 (defn comments-form
   [post-id]
   [:form
-   {:id "comment-form" :hx-post "/comments" :hx-swap "afterbegin" :hx-target "#comment-list" :hx-swap-oob "true"}
+   {:id "comment-form" :hx-post "http://localhost:3000/comments" :hx-swap "afterbegin" :hx-target "#comment-list" :hx-swap-oob "true"}
    [:input {:type "hidden" :name "post-id" :value post-id}]
    [:label {:for "author"} "Name (optional)"]
    [:input {:type "text" :name "author"}]
    [:label {:for "message"} "Comment"]
-   [:textarea {:name "message" :required true :rows 5}]])
+   [:textarea {:name "message" :required true :rows 5}]
+   [:button {:type "submit"} "Submit"]])
 
 (comment
   (html [:p {:class "name"} "<div>hello world</div>"])
