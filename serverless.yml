@@ -25,5 +25,5 @@ functions:
     events:
       - httpApi:
           method: '*'
-          path: /comments/{proxy+}
+          path: /{proxy+}
 

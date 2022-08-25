@@ -14,9 +14,9 @@
     [:div {:id "comment-list"} serialized-comments]))
  
 (defn comments-form
-  [post-id]
+  [post-id post-url]
   [:form
-   {:id "comment-form" :hx-post "http://localhost:3000/comments" :hx-swap "afterbegin" :hx-target "#comment-list" :hx-swap-oob "true"}
+   {:id "comment-form" :hx-post post-url :hx-swap "afterbegin" :hx-target "#comment-list" :hx-swap-oob "true"}
    [:input {:type "hidden" :name "post-id" :value post-id}]
    [:label {:for "author"} "Name (optional)"]
    [:input {:type "text" :name "author"}]

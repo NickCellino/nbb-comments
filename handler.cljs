@@ -1,9 +1,16 @@
-(ns handler)
+(ns handler
+   (:require
+     [deps]
+     [comments.express :as exp]
+     [comments.backends.local :as backend]
+     ["serverless-http$default" :as serverless]
+     [nbb.classpath]))
 
-(defn handler [event _ctx]
-      (js/console.log event)
-      (js/Promise.resolve
-        (clj->js {:statusCode 200
-                  :body       (js/JSON.stringify #js{:message "Hello from Clojurescript!"})})))
+(def app
+  (exp/create-app
+    backend/add-comment
+    backend/list-comments))
 
-#js {:handler handler}
+(def serverless-app (serverless app))
+
+#js {:handler serverless-app}

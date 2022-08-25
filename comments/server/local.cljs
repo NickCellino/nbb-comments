@@ -6,7 +6,10 @@
 (def app
   (exp/create-app
     backend/add-comment
-    backend/list-comments))
+    backend/list-comments
+    "http://localhost:3000/comments"
+    "http://localhost:8080"))
+
 
 (def server
   (exp/start-server app 3000 (fn []

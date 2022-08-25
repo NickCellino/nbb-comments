@@ -13,37 +13,48 @@
       (:message body) (assoc :message (:message body))
       (:post-id body) (assoc :post-id (:post-id body)))))
 
+(defn get-comments-fn [list-comments]
+  (fn [req res]
+    (let [post-id (.-post-id (.-query req))
+          comments (list-comments post-id)]
+      (.send res (hiccup/html (html/serialize-comment-list comments))))))
+
+(defn add-comment-fn [add-comment add-comment-url]
+  (fn [req res]
+    (let [comment-input (parse-comment-body (.-body req))
+          post-id (:post-id comment-input)]
+      (add-comment comment-input)
+      (.send res (hiccup/html (list (html/comments-form post-id add-comment-url)
+                                    (html/serialize-comment comment-input)))))))
+
+(defn get-comments-form-fn [add-comment-url]
+  (fn [req res]
+    (let [post-id (.-post-id (.-query req))]
+      (if (nil? post-id)
+        (-> res
+            (.status 400)
+            (.send "post-id query param is required."))
+        (.send res (hiccup/html (html/comments-form post-id add-comment-url)))))))
 
 (defn create-app
-  [add-comment list-comments]
+  [add-comment list-comments add-comment-url frontend-url]
   (let [app (express)]
     (.use app (.urlencoded express #js {:extended true}))
-    (.use app (fn [req res next]
+    (.use app (fn [_ res next]
                 (doto res
-                  (.set "Access-Control-Allow-Origin" "http://localhost:8080")
+                  (.set "Access-Control-Allow-Origin" frontend-url)
                   (.set "Access-Control-Allow-Methods" "GET, POST")
                   (.set "Access-Control-Allow-Headers" "hx-trigger, hx-target, hx-request, hx-current-url"))
                 (next)))
+    (.use app (fn [req _ next]
+                (.log js/console "got request" req)
+                (next)))
 
-    (.get app "/comments" (fn [req res]
-                            (let [post-id (.-post-id (.-query req))
-                                  comments (list-comments post-id)]
-                              (.send res (hiccup/html (html/serialize-comment-list comments))))))
+    (.get app "/comments" (get-comments-fn list-comments))
+    (.post app "/comments" (add-comment-fn add-comment add-comment-url))
 
-    (.post app "/comments" (fn [req res]
-                             (let [comment-input (parse-comment-body (.-body req))
-                                   post-id (:post-id comment-input)]
-                               (add-comment comment-input)
-                               (.send res (hiccup/html (list (html/comments-form post-id)
-                                                             (html/serialize-comment comment-input)))))))
+    (.get app "/comments-form" (get-comments-form-fn add-comment-url))
 
-    (.get app "/comments-form" (fn [req res]
-                                 (let [post-id (.-post-id (.-query req))]
-                                   (if (nil? post-id)
-                                     (-> res
-                                         (.status 400)
-                                         (.send "post-id query param is required."))
-                                     (.send res (hiccup/html (html/comments-form post-id)))))))
     app))
 
 (defn start-server
