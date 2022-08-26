@@ -1,12 +1,32 @@
 (ns comments.html
   (:require [clojure.string :as string]
             [comments.hiccup-clone :refer [html]]))
+"
+const formatDate = (date) => {
+  const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August',
+    'September', 'October', 'November', 'December'];
+
+  const month = months[date.getMonth()];
+  const year = 1900 + date.getYear();
+
+  return `${date.getHours()}:${date.getMinutes()}, ${month} ${date.getDate()}, ${year}`
+}
+"
+(defn format-date
+  [iso-date]
+  (let [date-obj (js/Date. iso-date)
+        months ["January", "February", "March", "April", "May", "June", "July", "August",
+                "September", "October", "November", "December"]
+        date-month (get months (.getMonth date-obj))
+        date-year (+ 1900 (.getYear date-obj))]
+    (str (.getHours date-obj) ":" (.getMinutes date-obj) ", " date-month " " (.getDate date-obj) ", " date-year))) 
 
 (defn serialize-comment
   [comment-body]
   (let [author-section [:p {:class "name"} [:strong (or (:author comment-body) "Anonymous")] "said..."]
-        message-section [:p {:class "message"} (:message comment-body)]]
-    [:div {:class "comment"} author-section message-section]))
+        message-section [:p {:class "message"} (:message comment-body)]
+        date-section [:p {:class "datetime"} (format-date (:time comment-body))]]
+    [:div {:class "comment"} author-section message-section date-section]))
 
 (defn serialize-comment-list
   [comments]
