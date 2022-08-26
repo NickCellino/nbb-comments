@@ -3,7 +3,8 @@
             ["http" :as http]
             [cljs-bean.core :as bean]
             [comments.hiccup-clone :as hiccup]
-            [comments.html :as html]))
+            [comments.html :as html]
+            [promesa.core :as p]))
 
 (defn parse-comment-body
   [js-body]
@@ -15,14 +16,14 @@
 
 (defn get-comments-fn [list-comments]
   (fn [req res]
-    (let [post-id (.-post-id (.-query req))
-          comments (list-comments post-id)]
+    (p/let [post-id (.-post-id (.-query req))
+            comments (list-comments post-id)]
       (.send res (hiccup/html (html/serialize-comment-list comments))))))
 
 (defn add-comment-fn [add-comment add-comment-url]
   (fn [req res]
-    (let [comment-input (parse-comment-body (.-body req))
-          post-id (:post-id comment-input)]
+    (p/let [comment-input (parse-comment-body (.-body req))
+            post-id (:post-id comment-input)]
       (add-comment comment-input)
       (.send res (hiccup/html (list (html/comments-form post-id add-comment-url)
                                     (html/serialize-comment comment-input)))))))

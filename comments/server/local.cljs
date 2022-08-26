@@ -1,7 +1,7 @@
 (ns comments.server.local
   (:require
     [comments.express :as exp]
-    [comments.backends.local :as backend]))
+    [comments.backends.dynamo :as backend]))
 
 (def app
   (exp/create-app
