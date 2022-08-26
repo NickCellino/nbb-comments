@@ -70,7 +70,7 @@
   (p/let [client (dynamo/DynamoDBClient. {:region "us-east-1"})
           js-comments (list-dynamo-comments client post-id)
           clj-comments (:Items (bean/->clj js-comments))]
-    (map de-dynamoify-comment clj-comments)))
+    (reverse (sort-by :time (map de-dynamoify-comment clj-comments)))))
 
 (comment
   (p/do! (add-comment {:post-id "clojure-bandits" :message "Where's the canoli?" :author "Tony Blundetto"}))

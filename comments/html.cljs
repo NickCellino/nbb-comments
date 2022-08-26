@@ -1,17 +1,7 @@
 (ns comments.html
   (:require [clojure.string :as string]
             [comments.hiccup-clone :refer [html]]))
-"
-const formatDate = (date) => {
-  const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August',
-    'September', 'October', 'November', 'December'];
 
-  const month = months[date.getMonth()];
-  const year = 1900 + date.getYear();
-
-  return `${date.getHours()}:${date.getMinutes()}, ${month} ${date.getDate()}, ${year}`
-}
-"
 (defn format-date
   [iso-date]
   (let [date-obj (js/Date. iso-date)

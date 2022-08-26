@@ -1,7 +1,7 @@
 (ns comments.server.lambda
   (:require
     [comments.express :as exp]
-    [comments.backends.local :as backend]
+    [comments.backends.dynamo :as backend]
     ["serverless-http$default" :as serverless]))
 
 (def app

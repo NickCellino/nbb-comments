@@ -26,7 +26,7 @@
             post-id (:post-id comment-input)]
       (add-comment comment-input)
       (.send res (hiccup/html (list (html/comments-form post-id add-comment-url)
-                                    (html/serialize-comment comment-input)))))))
+                                    (html/serialize-comment (assoc comment-input :time (.toISOString (js/Date.))))))))))
 
 (defn get-comments-form-fn [add-comment-url]
   (fn [req res]
