@@ -26,28 +26,36 @@ Sort key should be some kind of unique comment id
         (.send client cmd)))
 
 (defn add-dynamo-comment
-  [client post-id comment-id message]
+  [client payload]
   (let [cmd-input {:TableName "BlogComment"
-                   :Item {:PostId {:S post-id}
-                          :CommentId {:S comment-id}
-                          :Message {:S message}}}
+                   :Item payload}
         cmd (dynamo/PutItemCommand. (bean/->js cmd-input))]
     (.send client cmd)))
 
 
-(defn add-comment
-  [message]
-  (let [comment-id (uuid/v4)
-        client (dynamo/DynamoDBClient. {:region "us-east-1"})]
-    (p/do!
-      (add-dynamo-comment client "clojure-bandits" comment-id message))))
+(defn build-dynamo-comment-payload
+  [comment-input]
+  {:PostId {:S (:post-id comment-input)}
+   :CommentId {:S (uuid/v4)}
+   :Message {:S (:message comment-input)}
+   :Time {:S (.toISOString (js/Date.))}
+   :Author {:S (:author comment-input)}})
 
-(def result (add-comment "hello world"))
+
+(defn add-comment
+  [new-comment]
+  (let [client (dynamo/DynamoDBClient. {:region "us-east-1"})
+        comment-payload (build-dynamo-comment-payload new-comment)]
+    (p/do!
+      (add-dynamo-comment client comment-payload))))
 
 (comment
-  (p/let
-    [r (add-comment "is this thing on?")]
-    (def test r))
+  (p/do! (add-comment {:post-id "clojure-bandits" :message "Where's the canoli?" :author "Tony Blundetto"}))
+   
+  (p/do!
+    (p/let
+     [r (add-comment {:post-id "clojure-bandits" :message "Where's the canoli?" :author "Tony Blundetto"})]
+     (def test r)))
   (get-in (bean/->clj test) [:$metadata :httpStatusCode]))
 
 (defn main []
