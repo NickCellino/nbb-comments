@@ -13,7 +13,8 @@
 
 (defn serialize-comment
   [comment-body]
-  (let [author-section [:p {:class "name"} [:strong (or (:author comment-body) "Anonymous")] "said..."]
+  (let [author (if (not (empty? (:author comment-body))) (:author comment-body) "Anonymous")
+        author-section [:p {:class "name"} [:strong author] "said..."]
         message-section [:p {:class "message"} (:message comment-body)]
         date-section [:p {:class "datetime"} (format-date (:time comment-body))]]
     [:div {:class "comment"} author-section message-section date-section]))
