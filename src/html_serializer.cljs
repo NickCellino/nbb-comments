@@ -1,6 +1,12 @@
 (ns html-serializer
   (:require [hiccup :refer [html]]))
 
+(defn zero-pad
+  [x len]
+  (if (< (count x) len)
+    (recur (str "0" x) len)
+    x))
+
 (defn format-iso-date
   "Take an ISO-8601 date string and returns a string in the format: '14:45 August 20, 2018'"
   [iso-date]
@@ -9,7 +15,16 @@
                 "September", "October", "November", "December"]
         date-month (get months (.getMonth date-obj))
         date-year (+ 1900 (.getYear date-obj))]
-    (str (.getHours date-obj) ":" (.getMinutes date-obj) ", " date-month " " (.getDate date-obj) ", " date-year))) 
+    (str
+      (.getHours date-obj)
+      ":"
+      (zero-pad (str (.getMinutes date-obj)) 2)
+      ", "
+      date-month
+      " "
+      (.getDate date-obj)
+      ", "
+      date-year)))
 
 (defn serialize-comment
   [comment-body]
