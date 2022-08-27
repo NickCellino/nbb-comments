@@ -1,4 +1,5 @@
 (ns deps
-  (:require [nbb.classpath :refer [add-classpath]]))
+  (:require [nbb.classpath :refer [add-classpath get-classpath]]))
 
-(add-classpath ".")
+(add-classpath "./src")
+(println (get-classpath))

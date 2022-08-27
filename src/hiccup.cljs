@@ -1,8 +1,7 @@
 ; mostly copied from borkdude comment in clojurians#nbb slack channel
-(ns comments.hiccup-clone
+(ns hiccup
   (:require [clojure.string :as str]
-            [goog.string :as gstr]
-            [cljs-bean.core :as bean]))
+            [goog.string :as gstr]))
 
 (defn escape-html
   [text]

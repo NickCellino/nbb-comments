@@ -1,8 +1,8 @@
-(ns comments.html
-  (:require [clojure.string :as string]
-            [comments.hiccup-clone :refer [html]]))
+(ns html-serializer
+  (:require [hiccup :refer [html]]))
 
-(defn format-date
+(defn format-iso-date
+  "Take an ISO-8601 date string and returns a string in the format: '14:45 August 20, 2018'"
   [iso-date]
   (let [date-obj (js/Date. iso-date)
         months ["January", "February", "March", "April", "May", "June", "July", "August",
@@ -13,10 +13,12 @@
 
 (defn serialize-comment
   [comment-body]
-  (let [author (if (not (empty? (:author comment-body))) (:author comment-body) "Anonymous")
+  (let [author (if (not (nil? (:author comment-body)))
+                 (:author comment-body)
+                 "Anonymous")
         author-section [:p {:class "name"} [:strong author] "said..."]
         message-section [:p {:class "message"} (:message comment-body)]
-        date-section [:p {:class "datetime"} (format-date (:time comment-body))]]
+        date-section [:p {:class "datetime"} (format-iso-date (:time comment-body))]]
     [:div {:class "comment"} author-section message-section date-section]))
 
 (defn serialize-comment-list
@@ -24,17 +26,6 @@
   (let [serialized-comments (map serialize-comment comments)]
     [:div {:id "comment-list"} serialized-comments]))
  
-(defn comments-form
-  [post-id post-url]
-  [:form
-   {:id "comment-form" :hx-post post-url :hx-swap "afterbegin" :hx-target "#comment-list" :hx-swap-oob "true"}
-   [:input {:type "hidden" :name "post-id" :value post-id}]
-   [:label {:for "author"} "Name (optional)"]
-   [:input {:type "text" :name "author"}]
-   [:label {:for "message"} "Comment"]
-   [:textarea {:name "message" :required true :rows 5}]
-   [:button {:type "submit"} "Submit"]])
-
 (comment
   (html [:p {:class "name"} "<div>hello world</div>"])
   (html [:p {:class "name"} [:strong "nick"] "said..."])
