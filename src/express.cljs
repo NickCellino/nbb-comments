@@ -2,9 +2,26 @@
   (:require ["express$default" :as express]
             ["http" :as http]
             [cljs-bean.core :as bean]
-            [comments.hiccup-clone :as hiccup]
-            [comments.html :as html]
-            [promesa.core :as p]))
+            [hiccup :as hiccup]
+            [html :as html]
+            [promesa.core :as p]
+            [goog.object :as gobj]))
+
+(defn extract-param
+  [param req]
+  (let [param-type (:type param)
+        val (cond
+              (= param-type :body) (gobj/getValueByKeys req "body" (:name param))
+              :else nil)]
+    (when (and (nil? val) (:required param))
+      (throw (js/Error. (str "missing required parameter " param))))
+    val))
+
+(defn extract-params
+  [params req]
+  (let [values (map #(extract-param % req) params)
+        param-kw-names (map (comp keyword :name) params)]
+    (into {} (map vector param-kw-names values))))
 
 (defn parse-comment-body
   [js-body]
@@ -66,3 +83,47 @@
 (defn stop-server
   [server]
   (.close server))
+
+(comment
+  (def example-req #js {:body #js {:post-id "foo-bar"}})
+
+  (aget example-req "body")
+  ((str ".-" "body"))
+
+  (def example-param {:body "author" :required true})
+  (str example-param)
+
+  (def ks [:foo :bar :baz])
+  (def vs [1 2 3])
+  (into {} (map vector ks vs))
+
+  (def example #js {:body #js {:author "Nicholas"}})
+  (extract-param {:type :body :name "author" :required true} example)
+  (extract-param {:type :body :name "missing" :required true} example)
+  (extract-param {:type :body :name "missing" :required false} example)
+
+  (gobj/getValueByKeys example-req "body" "post-id")
+  (gobj/getValueByKeys example-req "query" "post-id")
+
+  (def example-req #js {:body #js {:author "nick"
+                                   :message "hiya"
+                                   :post-id "foo-bar"}})
+  (def expected {:author "nick" :message "hiya" :post-id "foo-bar"})
+  (assert (= expected
+             (extract-params
+              [{:type :body :name "author" :required true}
+               {:type :body :name "message" :required true}
+               {:type :body :name "post-id" :required true}]
+              example-req)))
+
+  ; Make sure it throws an error when missing required param
+  (assert
+    (instance?
+      js/Error
+      (try
+        (extract-params
+          [{:type :body :name "missing" :required true}
+           {:type :body :name "message" :required true}
+           {:type :body :name "post-id" :required true}]
+          example-req)
+        (catch js/Error err err)))))

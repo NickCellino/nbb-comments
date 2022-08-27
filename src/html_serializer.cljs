@@ -52,6 +52,4 @@
   (html (serialize-comment-list [{:author "Nicholas" :message "hello world!"}
                                  {:message "hello world!"}
                                  {:message "yo"}
-                                 {:message "sup"}]))
-
-  (html (comments-form "clojure-bandits")))
+                                 {:message "sup"}])))
