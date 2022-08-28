@@ -1,4 +1,4 @@
-(ns comments.server.lambda
+(ns server.lambda
   (:require
     [comments.express :as exp]
     [comments.backends.dynamo :as backend]

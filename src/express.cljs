@@ -1,9 +1,6 @@
 (ns express
   (:require ["express$default" :as express]
             ["http" :as http]
-            [cljs-bean.core :as bean]
-            [hiccup :as hiccup]
-            [html :as html]
             [promesa.core :as p]
             [goog.object :as gobj]))
 
@@ -12,66 +9,68 @@
   (let [param-type (:type param)
         val (cond
               (= param-type :body) (gobj/getValueByKeys req "body" (:name param))
+              (= param-type :query) (gobj/getValueByKeys req "query" (:name param))
               :else nil)]
     (when (and (nil? val) (:required param))
       (throw (js/Error. (str "missing required parameter " param))))
     val))
 
 (defn extract-params
+  "Extract parameters from an expressjs request.
+
+  Can extract params from body or query params.
+
+  Can specify which fields are required.
+
+  Example-usage:
+    (extract-params
+      [{:type :body :name \"message\" :required true}
+       {:type :query :name \"post-id\"}]
+      req"
   [params req]
   (let [values (map #(extract-param % req) params)
         param-kw-names (map (comp keyword :name) params)]
     (into {} (map vector param-kw-names values))))
 
-(defn parse-comment-body
-  [js-body]
-  (let [body (bean/->clj js-body)]
-    (cond-> {}
-      (:author body) (assoc :author (:author body))
-      (:message body) (assoc :message (:message body))
-      (:post-id body) (assoc :post-id (:post-id body)))))
-
-(defn get-comments-fn [list-comments]
+(defn get-comments-handler-factory
+  [list-comments]
   (fn [req res]
-    (p/let [post-id (.-post-id (.-query req))
-            comments (list-comments post-id)]
-      (.send res (hiccup/html (html/serialize-comment-list comments))))))
+    (p/let [{:keys [post-id]} (extract-params [{:type :query :name "post-id" :required true}] req)
+            list-comments-response (list-comments post-id)]
+      (.send res list-comments-response))))
 
-(defn add-comment-fn [add-comment add-comment-url]
+(defn post-comment-handler-factory
+  [add-comment]
   (fn [req res]
-    (p/let [comment-input (parse-comment-body (.-body req))
-            post-id (:post-id comment-input)]
-      (add-comment comment-input)
-      (.send res (hiccup/html (list (html/comments-form post-id add-comment-url)
-                                    (html/serialize-comment (assoc comment-input :time (.toISOString (js/Date.))))))))))
+    (p/let [payload-config [{:type :body :name "author" :required true}
+                            {:type :body :name "message" :required true}
+                            {:type :body :name "post-id" :required true}]
+            cmt (extract-params payload-config req)
+            add-comment-response (add-comment cmt)]
+      (.send res add-comment-response))))
 
-(defn get-comments-form-fn [add-comment-url]
+(defn get-comments-form-handler-factory
+  [gen-comments-form-html]
   (fn [req res]
-    (let [post-id (.-post-id (.-query req))]
-      (if (nil? post-id)
-        (-> res
-            (.status 400)
-            (.send "post-id query param is required."))
-        (.send res (hiccup/html (html/comments-form post-id add-comment-url)))))))
+    (let [{:keys [post-id]} (extract-params [{:type :query :name "post-id" :required true}] req)
+          comments-form-html (gen-comments-form-html post-id)]
+      (.send res comments-form-html))))
 
 (defn create-app
-  [add-comment list-comments add-comment-url frontend-url]
+  [post-comment-handler get-comments-handler get-comments-form-handler allowed-origin-url]
   (let [app (express)]
     (.use app (.urlencoded express #js {:extended true}))
     (.use app (fn [_ res next]
                 (doto res
-                  (.set "Access-Control-Allow-Origin" frontend-url)
+                  (.set "Access-Control-Allow-Origin" allowed-origin-url)
                   (.set "Access-Control-Allow-Methods" "GET, POST")
                   (.set "Access-Control-Allow-Headers" "hx-trigger, hx-target, hx-request, hx-current-url"))
                 (next)))
-    (.use app (fn [req _ next]
-                (.log js/console "got request" req)
-                (next)))
 
-    (.get app "/comments" (get-comments-fn list-comments))
-    (.post app "/comments" (add-comment-fn add-comment add-comment-url))
+    (.get app "/comments" get-comments-handler)
+    (.post app "/comments" post-comment-handler)
 
-    (.get app "/comments-form" (get-comments-form-fn add-comment-url))
+    (.get app "/comments-form" get-comments-form-handler)
 
     app))
 
@@ -83,6 +82,19 @@
 (defn stop-server
   [server]
   (.close server))
+
+(defn configure-express
+  [{:keys [post-comment
+           get-comments
+           gen-comments-form-html
+           allowed-origin-url
+           port]}]
+  (let [post-comment-handler (post-comment-handler-factory post-comment)
+        get-comments-handler (get-comments-handler-factory get-comments)
+        get-comments-form-handler (get-comments-form-handler-factory gen-comments-form-html)
+        app (create-app post-comment-handler get-comments-handler get-comments-form-handler allowed-origin-url)
+        server (start-server app port (fn [] (.log js/console "Listening on port" port)))]
+    {:server server}))
 
 (comment
   (def example-req #js {:body #js {:post-id "foo-bar"}})
@@ -101,6 +113,8 @@
   (extract-param {:type :body :name "author" :required true} example)
   (extract-param {:type :body :name "missing" :required true} example)
   (extract-param {:type :body :name "missing" :required false} example)
+
+  (extract-param {:type :query :name "pid" :required true} #js {:query #js {:pid "foo"}})
 
   (gobj/getValueByKeys example-req "body" "post-id")
   (gobj/getValueByKeys example-req "query" "post-id")

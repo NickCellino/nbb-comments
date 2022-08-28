@@ -1,4 +1,4 @@
-(ns comments.backends.local)
+(ns backends.local)
 
 (def comments (atom []))
 

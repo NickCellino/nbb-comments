@@ -18,7 +18,9 @@
   [gen-comments-form save-comment]
   (fn
     [cmt]
-    (let [comment-result (save-comment cmt)
+    (let [comment-time (.toISOString (js/Date.))
+          cmt-w-time (assoc cmt :time comment-time)
+          comment-result (save-comment cmt-w-time)
           serialized-result (html/serialize-comment comment-result)
           new-comment-form (gen-comments-form (:post-id cmt))
           result (list new-comment-form serialized-result)]
@@ -47,9 +49,11 @@
            save-comment-fn
            get-comments-fn]}]
   (let [gen-comments-form (comments-form-factory comment-form-id comment-list-div-id post-comment-url)
+        gen-comments-form-html (comp hiccup/html gen-comments-form)
         post-comment (post-comment-factory gen-comments-form save-comment-fn)
         get-comments (get-comments-factory get-comments-fn)]
     {:gen-comments-form gen-comments-form
+     :gen-comments-form-html gen-comments-form-html
      :post-comment post-comment
      :get-comments get-comments}))
 
