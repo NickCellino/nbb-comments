@@ -1,6 +1,8 @@
-(ns run-local
-  (:require [app]
-            [backends.local :as backend]))
+(ns local-server
+  (:require [deps]
+            [app]
+            [backends.local :as backend]
+            [express]))
 
 (def htmx-config {:comment-form-id "comment-form"
                   :comment-list-div-id "comments-list"
@@ -13,11 +15,15 @@
   {:post-comment (:post-comment htmx)
    :get-comments (:get-comments htmx) 
    :gen-comments-form-html (:gen-comments-form-html htmx)
-   :allowed-origin-url "http://localhost:8080"
-   :port "3000"})
+   :allowed-origin-url "http://localhost:8080"})
 
-(def system (app/run-app htmx-config express-config))
+(def system (app/init-app htmx-config express-config))
+
+(def local-server (express/start-server
+                   (get-in system [:express :app])
+                   "3000"
+                   (fn [] (.log js/console "Listening on port 3000"))))
 
 (comment
-  (app/stop-app system))
+  (express/stop-server local-server))
 

@@ -87,14 +87,12 @@
   [{:keys [post-comment
            get-comments
            gen-comments-form-html
-           allowed-origin-url
-           port]}]
+           allowed-origin-url]}]
   (let [post-comment-handler (post-comment-handler-factory post-comment)
         get-comments-handler (get-comments-handler-factory get-comments)
         get-comments-form-handler (get-comments-form-handler-factory gen-comments-form-html)
-        app (create-app post-comment-handler get-comments-handler get-comments-form-handler allowed-origin-url)
-        server (start-server app port (fn [] (.log js/console "Listening on port" port)))]
-    {:server server}))
+        app (create-app post-comment-handler get-comments-handler get-comments-form-handler allowed-origin-url)]
+    {:app app}))
 
 (comment
   (def example-req #js {:body #js {:post-id "foo-bar"}})
