@@ -1,14 +1,15 @@
 ; htmx interface for comments backend
 (ns htmx
   (:require [html-serializer :as html]
-            [hiccup]))
+            [hiccup]
+            [promesa.core :as p]))
 
 (defn get-comments-factory
   "Retrieves a list of comments as HTML."
   [get-comments]
   (fn [post-id]
-    (let [cmts (get-comments post-id)
-          html-comments (html/serialize-comment-list cmts)]
+    (p/let [cmts (get-comments post-id)
+            html-comments (html/serialize-comment-list cmts)]
       (hiccup/html html-comments))))
 
 (defn post-comment-factory
@@ -18,12 +19,12 @@
   [gen-comments-form save-comment]
   (fn
     [cmt]
-    (let [comment-time (.toISOString (js/Date.))
-          cmt-w-time (assoc cmt :time comment-time)
-          comment-result (save-comment cmt-w-time)
-          serialized-result (html/serialize-comment comment-result)
-          new-comment-form (gen-comments-form (:post-id cmt))
-          result (list new-comment-form serialized-result)]
+    (p/let [comment-time (.toISOString (js/Date.))
+            cmt-w-time (assoc cmt :time comment-time)
+            comment-result (save-comment cmt-w-time)
+            serialized-result (html/serialize-comment comment-result)
+            new-comment-form (gen-comments-form (:post-id cmt))
+            result (list new-comment-form serialized-result)]
       (hiccup/html result))))
 
 (defn comments-form-factory

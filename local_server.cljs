@@ -1,7 +1,8 @@
 (ns local-server
   (:require [deps]
             [app]
-            [backends.local :as backend]
+;            [backends.local :as backend]
+            [backends.dynamo :as backend]
             [express]))
 
 (def htmx-config {:comment-form-id "comment-form"

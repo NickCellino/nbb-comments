@@ -42,7 +42,8 @@
   (let [client (dynamo/DynamoDBClient. {:region "us-east-1"})
         comment-payload (build-dynamo-comment-payload new-comment)]
     (p/do!
-      (add-dynamo-comment client comment-payload))))
+      (add-dynamo-comment client comment-payload)
+      new-comment)))
 
 (defn list-dynamo-comments
   [client post-id]

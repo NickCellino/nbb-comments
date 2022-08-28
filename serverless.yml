@@ -22,6 +22,9 @@ functions:
 
   comments-api:
     handler: index.handler
+    environment:
+      LAMBDA_BASE_URL: !Join ["", ["https://", !Ref HttpApi, ".execute-api.${aws:region}.amazonaws.com"]]
+      ALLOWED_ORIGIN_URL: "http://localhost:8080"
     events:
       - httpApi:
           method: '*'
