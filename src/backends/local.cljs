@@ -7,7 +7,8 @@
   (swap!
     comments
     (fn [current-comments]
-      (conj current-comments new-comment))))
+      (conj current-comments new-comment)))
+  new-comment)
 
 (defn list-comments
   [post-id]

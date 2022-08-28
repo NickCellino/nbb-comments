@@ -12,5 +12,6 @@
 (defn stop-app
   [system]
   (let [server (get-in system [:express :server])]
-    (express/stop-server server)))
+    (express/stop-server server)
+    (.log js/console "Server has stopped listening")))
 
