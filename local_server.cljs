@@ -5,7 +5,8 @@
             [backends.dynamo :as backend]
             [express]))
 
-(def htmx-config {:comment-form-id "comment-form"
+(def htmx-config {:recaptcha-sitekey "6LcMAZQhAAAAAJKuFrianjr-xP8XIOysos4qeR4S"
+                  :comment-form-id "comment-form"
                   :comment-list-div-id "comments-list"
                   :post-comment-url "http://localhost:3000/comments"
                   :save-comment-fn backend/add-comment
@@ -26,5 +27,6 @@
                    (fn [] (.log js/console "Listening on port 3000"))))
 
 (comment
-  (express/stop-server local-server))
+  (express/stop-server local-server)
+  (get-in system [:htmx :submit-comment-button]))
 

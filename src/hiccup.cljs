@@ -12,19 +12,30 @@
     (str/replace "\"" "&quot;")
     (str/replace "'" "&apos;")))
 
-(defn html [v]
-  (cond (vector? v)
-        (let [tag (first v)
-              attrs (second v)
-              attrs (when (map? attrs) attrs)
-              elts (if attrs (nnext v) (next v))
-              tag-name (name tag)]
-          (gstr/format "<%s%s>%s</%s>\n" tag-name (html attrs) (html elts) tag-name))
-        (map? v)
-        (str/join ""
-                  (map (fn [[k v]]
-                         (gstr/format " %s=\"%s\"" (name k) v)) v))
-        (seq? v)
-        (str/join " " (map html v))
-        :else (escape-html (str v))))
+(def foo (with-meta {} {:raw true}))
+(meta foo)
+
+(defn html
+  ([v skip-escape-html]
+   (cond (vector? v)
+         (let [tag (first v)
+               attrs (second v)
+               attrs (when (map? attrs) attrs)
+               elts (if attrs (nnext v) (next v))
+               tag-name (name tag)]
+           (gstr/format
+             "<%s%s>%s</%s>\n"
+             tag-name
+             (html attrs skip-escape-html)
+             (html elts skip-escape-html)
+             tag-name))
+         (map? v)
+         (str/join ""
+                   (map (fn [[k v]]
+                          (gstr/format " %s=\"%s\"" (name k) v)) v))
+         (seq? v)
+         (str/join " " (map #(html % skip-escape-html) v))
+         :else (if skip-escape-html (str v) (escape-html (str v)))))
+  ([v]
+   (html v false)))
 

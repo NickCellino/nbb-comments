@@ -44,7 +44,8 @@
   (fn [req res]
     (p/let [payload-config [{:type :body :name "author" :required true}
                             {:type :body :name "message" :required true}
-                            {:type :body :name "post-id" :required true}]
+                            {:type :body :name "post-id" :required true}
+                            {:type :body :name "g-recaptcha-response" :required true}]
             cmt (extract-params payload-config req)
             add-comment-response (add-comment cmt)]
       (.send res add-comment-response))))
@@ -65,6 +66,9 @@
                   (.set "Access-Control-Allow-Origin" allowed-origin-url)
                   (.set "Access-Control-Allow-Methods" "GET, POST")
                   (.set "Access-Control-Allow-Headers" "hx-trigger, hx-target, hx-request, hx-current-url"))
+                (next)))
+    (.use app (fn [req res next]
+                (.log js/console (.-body req))
                 (next)))
 
     (.get app "/comments" get-comments-handler)

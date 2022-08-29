@@ -12,51 +12,98 @@
             html-comments (html/serialize-comment-list cmts)]
       (hiccup/html html-comments))))
 
+(defn author-input
+  ([id swap-oob]
+   (let [html-attrs {:type "text" :name "author" :id id}
+         html-attrs (if swap-oob (assoc html-attrs :hx-swap-oob true) html-attrs)]
+     [:input html-attrs]))
+  ([swap-oob] (author-input "author-input" swap-oob)))
+
+(defn message-input
+  ([id swap-oob]
+   (let [html-attrs {:name "message" :required true :rows 5 :id id}
+         html-attrs (if swap-oob (assoc html-attrs :hx-swap-oob true) html-attrs)]
+     [:textarea html-attrs]))
+  ([swap-oob] (message-input "message-input" swap-oob)))
+
 (defn post-comment-factory
   "Adds a comment. Returns HTML representing
   the added comment and also the new, blank input form
   to render in place of the old one."
-  [gen-comments-form save-comment]
+  [save-comment]
   (fn
     [cmt]
     (p/let [comment-time (.toISOString (js/Date.))
             cmt-w-time (assoc cmt :time comment-time)
             comment-result (save-comment cmt-w-time)
-            serialized-result (html/serialize-comment comment-result)
-            new-comment-form (gen-comments-form (:post-id cmt))
-            result (list new-comment-form serialized-result)]
-      (hiccup/html result))))
+            serialized-result (html/serialize-comment comment-result)]
+      (str
+        (hiccup/html (list
+                       (author-input true)
+                       (message-input true)))
+        "\n"
+        (hiccup/html serialized-result)))))
+
+(defn get-submit-comment-button
+  [recaptcha-sitekey]
+  (if recaptcha-sitekey
+    [:button {:type "submit"
+              :class "g-recaptcha"
+              :data-sitekey recaptcha-sitekey
+              :data-callback "announce"} "Submit"]
+    [:button {:type "submit"} "Submit"]))
+
+(defn get-recaptcha-callback-js
+  [comment-form-id recaptcha-callback-event]
+  (str
+    "function announce(token) {\n"
+    "  const event = new Event('" recaptcha-callback-event "');\n"
+    "  const elem = document.querySelector('#" comment-form-id "');\n"
+    "  elem.dispatchEvent(event);\n"
+    "}"))
 
 (defn comments-form-factory
-  [comment-form-id comment-list-div-id post-url]
+  [comment-form-id comment-list-div-id post-url submit-comment-button recaptcha-callback-event recaptcha-callback-js]
   (fn [post-id]
     [:form
      {:id comment-form-id
       :hx-post post-url
       :hx-swap "afterbegin"
       :hx-target (str "#" comment-list-div-id)
+      :hx-trigger recaptcha-callback-event
       :hx-swap-oob "true"}
      [:input {:type "hidden" :name "post-id" :value post-id}]
      [:label {:for "author"} "Name (optional)"]
-     [:input {:type "text" :name "author"}]
+     (author-input false)
      [:label {:for "message"} "Comment"]
-     [:textarea {:name "message" :required true :rows 5}]
-     [:button {:type "submit"} "Submit"]]))
+     (message-input false)
+     [:script recaptcha-callback-js]
+     submit-comment-button]))
 
 (defn configure-htmx
   [{:keys [comment-form-id
            comment-list-div-id
            post-comment-url
            save-comment-fn
-           get-comments-fn]}]
-  (let [gen-comments-form (comments-form-factory comment-form-id comment-list-div-id post-comment-url)
-        gen-comments-form-html (comp hiccup/html gen-comments-form)
-        post-comment (post-comment-factory gen-comments-form save-comment-fn)
+           get-comments-fn
+           recaptcha-sitekey]}]
+  (let [submit-comment-button (get-submit-comment-button recaptcha-sitekey)
+        recaptcha-callback-event "recaptcha-verified"
+        recaptcha-callback-js (get-recaptcha-callback-js comment-form-id recaptcha-callback-event)
+        gen-comments-form (comments-form-factory comment-form-id
+                                                 comment-list-div-id
+                                                 post-comment-url
+                                                 submit-comment-button
+                                                 recaptcha-callback-event
+                                                 recaptcha-callback-js)
+        gen-comments-form-html (comp #(hiccup/html % true) gen-comments-form)
+        post-comment (post-comment-factory save-comment-fn)
         get-comments (get-comments-factory get-comments-fn)]
     {:gen-comments-form gen-comments-form
      :gen-comments-form-html gen-comments-form-html
      :post-comment post-comment
-     :get-comments get-comments}))
+     :get-comments get-comments
+     :submit-comment-button submit-comment-button}))
 
 (comment
   (defn mock-save-cmt [cmt] (println "saving comment!" cmt) cmt)
