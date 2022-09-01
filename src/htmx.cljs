@@ -2,47 +2,43 @@
 (ns htmx
   (:require [html-serializer :as html]
             [hiccup]
+            [repo]
             [promesa.core :as p]))
 
-(defn get-comments-factory
-  "Retrieves a list of comments as HTML."
-  [get-comments]
-  (fn [post-id]
-    (p/let [cmts (get-comments post-id)
-            html-comments (html/serialize-comment-list cmts)]
-      (hiccup/html html-comments))))
-
 (defn author-input
-  ([id swap-oob]
-   (let [html-attrs {:type "text" :name "author" :id id}
-         html-attrs (if swap-oob (assoc html-attrs :hx-swap-oob true) html-attrs)]
-     [:input html-attrs]))
-  ([swap-oob] (author-input "author-input" swap-oob)))
+  [{:keys [author-input-id]} swap-oob]
+  (let [html-attrs {:type "text" :name "author" :id author-input-id}
+        html-attrs (if swap-oob (assoc html-attrs :hx-swap-oob true) html-attrs)]
+    [:input html-attrs]))
 
 (defn message-input
-  ([id swap-oob]
-   (let [html-attrs {:name "message" :required true :rows 5 :id id}
-         html-attrs (if swap-oob (assoc html-attrs :hx-swap-oob true) html-attrs)]
-     [:textarea html-attrs]))
-  ([swap-oob] (message-input "message-input" swap-oob)))
+  [{:keys [message-input-id]} swap-oob]
+  (let [html-attrs {:name "message" :required true :rows 5 :id message-input-id}
+        html-attrs (if swap-oob (assoc html-attrs :hx-swap-oob true) html-attrs)]
+    [:textarea html-attrs]))
 
-(defn post-comment-factory
+(defn get-comments
+  "Retrieves a list of comments as HTML."
+  [config post-id]
+  (p/let [cmts (repo/get-comments config post-id)
+          html-comments (html/serialize-comment-list cmts)]
+    (hiccup/html html-comments)))
+
+(defn post-comment
   "Adds a comment. Returns HTML representing
   the added comment and also the new, blank input form
   to render in place of the old one."
-  [save-comment]
-  (fn
-    [cmt]
-    (p/let [comment-time (.toISOString (js/Date.))
-            cmt-w-time (assoc cmt :time comment-time)
-            comment-result (save-comment cmt-w-time)
-            serialized-result (html/serialize-comment comment-result)]
-      (str
-        (hiccup/html (list
-                       (author-input true)
-                       (message-input true)))
-        "\n"
-        (hiccup/html serialized-result)))))
+  [config cmt]
+  (p/let [comment-time (.toISOString (js/Date.))
+          cmt-w-time (assoc cmt :time comment-time)
+          comment-result (repo/save-comment config cmt-w-time)
+          serialized-result (html/serialize-comment comment-result)]
+    (str
+      (hiccup/html (list
+                     (author-input config true)
+                     (message-input config true)))
+      "\n"
+      (hiccup/html serialized-result))))
 
 (defn get-submit-comment-button
   [recaptcha-sitekey]
@@ -54,7 +50,7 @@
     [:button {:type "submit"} "Submit"]))
 
 (defn get-recaptcha-callback-js
-  [comment-form-id recaptcha-callback-event]
+  [{:keys [comment-form-id recaptcha-callback-event]}]
   (str
     "function announce(token) {\n"
     "  const event = new Event('" recaptcha-callback-event "');\n"
@@ -62,66 +58,39 @@
     "  elem.dispatchEvent(event);\n"
     "}"))
 
-(defn comments-form-factory
-  [comment-form-id comment-list-div-id post-url submit-comment-button recaptcha-callback-event recaptcha-callback-js]
-  (fn [post-id]
-    [:form
-     {:id comment-form-id
-      :hx-post post-url
-      :hx-swap "afterbegin"
-      :hx-target (str "#" comment-list-div-id)
-      :hx-trigger recaptcha-callback-event
-      :hx-swap-oob "true"}
-     [:input {:type "hidden" :name "post-id" :value post-id}]
-     [:label {:for "author"} "Name (optional)"]
-     (author-input false)
-     [:label {:for "message"} "Comment"]
-     (message-input false)
-     [:script recaptcha-callback-js]
-     submit-comment-button]))
-
-(defn configure-htmx
+(defn gen-comments-form
   [{:keys [comment-form-id
            comment-list-div-id
            post-comment-url
-           save-comment-fn
-           get-comments-fn
-           recaptcha-sitekey]}]
-  (let [submit-comment-button (get-submit-comment-button recaptcha-sitekey)
-        recaptcha-callback-event "recaptcha-verified"
-        recaptcha-callback-js (get-recaptcha-callback-js comment-form-id recaptcha-callback-event)
-        gen-comments-form (comments-form-factory comment-form-id
-                                                 comment-list-div-id
-                                                 post-comment-url
-                                                 submit-comment-button
-                                                 recaptcha-callback-event
-                                                 recaptcha-callback-js)
-        gen-comments-form-html (comp #(hiccup/html % true) gen-comments-form)
-        post-comment (post-comment-factory save-comment-fn)
-        get-comments (get-comments-factory get-comments-fn)]
-    {:gen-comments-form gen-comments-form
-     :gen-comments-form-html gen-comments-form-html
-     :post-comment post-comment
-     :get-comments get-comments
-     :submit-comment-button submit-comment-button}))
+           recaptcha-callback-event
+           recaptcha-sitekey]
+    :as config}
+   post-id]
+  [:form
+   {:id comment-form-id
+    :hx-post post-comment-url
+    :hx-swap "afterbegin"
+    :hx-target (str "#" comment-list-div-id)
+    :hx-trigger recaptcha-callback-event
+    :hx-swap-oob "true"}
+   [:input {:type "hidden" :name "post-id" :value post-id}]
+   [:label {:for "author"} "Name (optional)"]
+   (author-input config false)
+   [:label {:for "message"} "Comment"]
+   (message-input config false)
+   [:script (get-recaptcha-callback-js config)]
+   [:script {:src "https://www.google.com/recaptcha/api.js"}]
+   (get-submit-comment-button recaptcha-sitekey)])
 
-(comment
-  (defn mock-save-cmt [cmt] (println "saving comment!" cmt) cmt)
+(def get-comments-form-html (comp #(hiccup/html % true) gen-comments-form))
 
-  (defn mock-get-cmts
-    [_]
-    [{:author "Nick" :message "hello world!" :time "2020-08-20T12:03:04Z"}
-     {:author "Joe" :message "hello world!" :time "2020-08-20T12:03:04Z"}
-     {:author "Mike" :message "hello world!" :time "2020-08-20T12:03:04Z"}
-     {:author "Alex" :message "hello world!" :time "2020-08-20T12:03:04Z"}])
+(defn make-htmx-config
+  [user-config]
+  (let [defaults {:comment-form-id "comment-form"
+                  :comment-list-div-id "comments-list"
+                  :post-comment-url "http://localhost:3000/comments"
+                  :recaptcha-callback-event "recaptcha-verified"
+                  :author-input-id "author-input"
+                  :message-input-id "message-input"}]
+    (merge defaults user-config)))
 
-  (def htmx-backend (configure-htmx {:comment-form-id "comments-form"
-                                     :comment-list-div-id "comments-list"
-                                     :post-comment-url "http://mock.com/foo"
-                                     :save-comment-fn mock-save-cmt
-                                     :get-comments-fn mock-get-cmts}))
-
-  (def post-comment (:post-comment htmx-backend))
-  (post-comment {:author "Nick" :message "hello world!" :time "2020-08-20T12:03:04Z"})
-
-  ((:get-comments htmx-backend) "asdf"))

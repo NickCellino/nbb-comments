@@ -1,8 +1,10 @@
 (ns express
   (:require ["express$default" :as express]
             ["http" :as http]
+            [recaptcha]
             [promesa.core :as p]
-            [goog.object :as gobj]))
+            [goog.object :as gobj]
+            [htmx]))
 
 (defn extract-param
   [param req]
@@ -26,39 +28,48 @@
     (extract-params
       [{:type :body :name \"message\" :required true}
        {:type :query :name \"post-id\"}]
-      req"
+      req)"
   [params req]
   (let [values (map #(extract-param % req) params)
         param-kw-names (map (comp keyword :name) params)]
     (into {} (map vector param-kw-names values))))
 
-(defn get-comments-handler-factory
-  [list-comments]
+(defn get-comments-handler
+  [{:keys [htmx-config]}]
   (fn [req res]
     (p/let [{:keys [post-id]} (extract-params [{:type :query :name "post-id" :required true}] req)
-            list-comments-response (list-comments post-id)]
+            list-comments-response (htmx/get-comments htmx-config post-id)]
       (.send res list-comments-response))))
 
-(defn post-comment-handler-factory
-  [add-comment]
-  (fn [req res]
+(defn post-comment-handler
+  [{:keys [htmx-config recaptcha-secret recaptcha-threshold]}]
+  (fn [req res] 
     (p/let [payload-config [{:type :body :name "author" :required true}
                             {:type :body :name "message" :required true}
                             {:type :body :name "post-id" :required true}
                             {:type :body :name "g-recaptcha-response" :required true}]
-            cmt (extract-params payload-config req)
-            add-comment-response (add-comment cmt)]
-      (.send res add-comment-response))))
+            payload (extract-params payload-config req)
+            add-comment-response (htmx/post-comment htmx-config payload)
+            verified (recaptcha/verify (:g-recaptcha-response payload) recaptcha-threshold recaptcha-secret)]
+      (if verified
+        (.send res add-comment-response)
+        (.send res "Uh oh. Recaptcha failed. Are you a robot?")))))
 
-(defn get-comments-form-handler-factory
-  [gen-comments-form-html]
+(defn get-comments-form-handler
+  [{:keys [htmx-config]}]
   (fn [req res]
     (let [{:keys [post-id]} (extract-params [{:type :query :name "post-id" :required true}] req)
-          comments-form-html (gen-comments-form-html post-id)]
+          comments-form-html (htmx/get-comments-form-html htmx-config post-id)]
       (.send res comments-form-html))))
 
+(defn make-express-config
+  [user-config]
+  (let [defaults {:allowed-origin-url "http://localhost:8080"
+                  :recaptcha-threshold 0.5}]
+    (merge defaults user-config)))
+
 (defn create-app
-  [post-comment-handler get-comments-handler get-comments-form-handler allowed-origin-url]
+  [{:keys [allowed-origin-url] :as config}]
   (let [app (express)]
     (.use app (.urlencoded express #js {:extended true}))
     (.use app (fn [_ res next]
@@ -67,36 +78,23 @@
                   (.set "Access-Control-Allow-Methods" "GET, POST")
                   (.set "Access-Control-Allow-Headers" "hx-trigger, hx-target, hx-request, hx-current-url"))
                 (next)))
-    (.use app (fn [req res next]
-                (.log js/console (.-body req))
-                (next)))
 
-    (.get app "/comments" get-comments-handler)
-    (.post app "/comments" post-comment-handler)
-
-    (.get app "/comments-form" get-comments-form-handler)
+    (.get app "/comments" (get-comments-handler config))
+    (.post app "/comments" (post-comment-handler config))
+    (.get app "/comments-form" (get-comments-form-handler config))
 
     app))
 
 (defn start-server
-  [app port callback]
+  [app & {:keys [port callback]
+          :or {port 3000
+               callback (fn [] (.log js/console "Listening on port 3000!"))}}]
   (let [server (.createServer http app)]
     (.listen server port callback)))
 
 (defn stop-server
   [server]
   (.close server))
-
-(defn configure-express
-  [{:keys [post-comment
-           get-comments
-           gen-comments-form-html
-           allowed-origin-url]}]
-  (let [post-comment-handler (post-comment-handler-factory post-comment)
-        get-comments-handler (get-comments-handler-factory get-comments)
-        get-comments-form-handler (get-comments-form-handler-factory gen-comments-form-html)
-        app (create-app post-comment-handler get-comments-handler get-comments-form-handler allowed-origin-url)]
-    {:app app}))
 
 (comment
   (def example-req #js {:body #js {:post-id "foo-bar"}})

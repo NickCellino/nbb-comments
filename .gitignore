@@ -29,3 +29,5 @@ gitignore.io help:
 dist/
 .serverless/
 .nbb/
+
+.env

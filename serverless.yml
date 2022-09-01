@@ -1,5 +1,7 @@
 service: comments-api
 
+useDotenv: true
+
 provider:
   name: aws
   runtime: nodejs16.x
@@ -25,6 +27,7 @@ functions:
     environment:
       LAMBDA_BASE_URL: !Join ["", ["https://", !Ref HttpApi, ".execute-api.${aws:region}.amazonaws.com"]]
       ALLOWED_ORIGIN_URL: "http://localhost:8080"
+      RECAPTCHA_SECRET: ${env:RECAPTCHA_SECRET}
     events:
       - httpApi:
           method: '*'
