@@ -1,7 +1,6 @@
 (ns local-server
   (:require [deps]
             [repos.local]
-            [repos.dynamo]
             [htmx]
             [express]))
 
