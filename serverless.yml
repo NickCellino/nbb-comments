@@ -28,6 +28,7 @@ functions:
       LAMBDA_BASE_URL: !Join ["", ["https://", !Ref HttpApi, ".execute-api.${aws:region}.amazonaws.com"]]
       ALLOWED_ORIGIN_URL: "http://localhost:8080"
       RECAPTCHA_SECRET: ${env:RECAPTCHA_SECRET}
+      RECAPTCHA_SITEKY: "6LcMAZQhAAAAAJKuFrianjr-xP8XIOysos4qeR4S"
     events:
       - httpApi:
           method: '*'

@@ -2,8 +2,8 @@
   (:require ["@aws-sdk/client-dynamodb" :as dynamo]
             ["uuid" :as uuid]
             [promesa.core :as p]
-            [cljs-bean.core :as bean]))
-
+            [cljs-bean.core :as bean]
+            [repo]))
 
 (defn create-comment-table
   [] (let [cmd-input {:TableName "BlogComment"
@@ -28,7 +28,6 @@
         cmd (dynamo/PutItemCommand. (bean/->js cmd-input))]
     (.send client cmd)))
 
-
 (defn build-dynamo-comment-payload
   [comment-input]
   {:PostId {:S (:post-id comment-input)}
@@ -44,6 +43,10 @@
     (p/do!
       (add-dynamo-comment client comment-payload)
       new-comment)))
+
+(defmethod repo/save-comment :dynamo
+  [_ new-comment]
+  (add-comment new-comment))
 
 (defn list-dynamo-comments
   [client post-id]
@@ -73,6 +76,10 @@
           clj-comments (:Items (bean/->clj js-comments))]
     (reverse (sort-by :time (map de-dynamoify-comment clj-comments)))))
 
+(defmethod repo/get-comments :dynamo
+  [_ post-id]
+  (list-comments post-id))
+
 (comment
   (p/do! (add-comment {:post-id "clojure-bandits" :message "Where's the canoli?" :author "Tony Blundetto"}))
 
@@ -84,9 +91,9 @@
     (p/let
      [r (add-comment {:post-id "clojure-bandits" :message "Where's the canoli?" :author "Tony Blundetto"})]
      (def test r)))
-  (get-in (bean/->clj test) [:$metadata :httpStatusCode]))
+  (get-in (bean/->clj test) [:$metadata :httpStatusCode])
 
-(defn main []
-  (p/let [r (create-comment-table)]
-    r))
+  (defn main []
+    (p/let [r (create-comment-table)]
+      r)))
 
