@@ -6,6 +6,16 @@ provider:
   name: aws
   runtime: nodejs16.x
   region: us-east-1
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:PutItem
+            - dynamodb:Query
+          Resource:
+            - !Sub 'arn:aws:dynamodb:${aws:region}:${AWS::AccountId}:table/${CommentDynamoTable}'
+
   httpApi:
     cors:
       allowedOrigins:
