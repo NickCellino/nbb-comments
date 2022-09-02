@@ -1,4 +1,4 @@
-(ns repos.local
+(ns dev.local-repo
   (:require [repo]))
 
 (def comments (atom []))

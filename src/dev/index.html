@@ -1,0 +1,30 @@
+<html>
+  <head>
+    <script src="https://unpkg.com/htmx.org@1.8.0" async></script>
+    <style>
+      .comment {
+        border-bottom: 1px solid;
+      }
+
+      input, textarea {
+        width: 100%;
+        margin-bottom: 5px;
+      }
+
+      button {
+        margin-top: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Comments Test Page</h1>
+
+    <h2>Leave a comment</h2>
+    <form id="comment-form" hx-get="http://localhost:3000/comments-form?post-id=example-post-id" hx-trigger="load"></form>
+
+    <h2>Comments</h2>
+    <div id="comments-list" hx-get="http://localhost:3000/comments?post-id=example-post-id" hx-swap"innerHTML" hx-trigger="load"></div>
+
+  </body>
+
+</html>

@@ -1,5 +1,5 @@
 (ns lambda
-  (:require [repos.dynamo]
+  (:require [dynamo-repo]
             [express]
             [htmx]
             ["serverless-http$default" :as serverless]))

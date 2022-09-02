@@ -1,4 +1,4 @@
-(ns repos.dynamo
+(ns dynamo-repo
   (:require ["@aws-sdk/client-dynamodb" :as dynamo]
             ["uuid" :as uuid]
             [promesa.core :as p]

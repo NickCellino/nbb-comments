@@ -69,7 +69,7 @@
     (merge defaults user-config)))
 
 (defn create-app
-  [{:keys [allowed-origin-url] :as config}]
+  [{:keys [allowed-origin-url static-files-root] :as config}]
   (let [app (express)]
     (.use app (.urlencoded express #js {:extended true}))
     (.use app (fn [_ res next]
@@ -78,6 +78,9 @@
                   (.set "Access-Control-Allow-Methods" "GET, POST")
                   (.set "Access-Control-Allow-Headers" "hx-trigger, hx-target, hx-request, hx-current-url"))
                 (next)))
+
+    (when static-files-root
+      (.use app (.static express static-files-root)))
 
     (.get app "/comments" (get-comments-handler config))
     (.post app "/comments" (post-comment-handler config))

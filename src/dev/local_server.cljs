@@ -1,18 +1,19 @@
-(ns local-server
+(ns dev.local-server
   (:require [deps]
-            [repos.local]
+            [dev.local-repo]
             [htmx]
             [express]))
 
 (def htmx-config
   (htmx/make-htmx-config
     {:repo :local
-     :recaptcha-sitekey "6LcMAZQhAAAAAJKuFrianjr-xP8XIOysos4qeR4S"}))
+     :recaptcha-sitekey js/process.env.RECAPTCHA_SITEKEY}))
 
 (def express-config
   (express/make-express-config
     {:htmx-config htmx-config
-     :recaptcha-secret js/process.env.RECAPTCHA_SECRET}))
+     :recaptcha-secret js/process.env.RECAPTCHA_SECRET
+     :static-files-root "src/dev"}))
 
 (def express-app
   (express/create-app express-config))
