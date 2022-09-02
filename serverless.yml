@@ -36,7 +36,7 @@ functions:
     handler: index.handler
     environment:
       LAMBDA_BASE_URL: !Join ["", ["https://", !Ref HttpApi, ".execute-api.${aws:region}.amazonaws.com"]]
-      ALLOWED_ORIGIN_URL: "https://nickcellino.com"
+      ALLOWED_ORIGIN_URL: ${env:ALLOWED_ORIGIN_URL}
       RECAPTCHA_SECRET: ${env:RECAPTCHA_SECRET}
       RECAPTCHA_SITEKEY: ${env:RECAPTCHA_SITEKEY}
       COMMENT_TABLE_NAME: !Ref CommentDynamoTable
