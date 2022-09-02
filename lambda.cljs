@@ -9,10 +9,12 @@
 (def allowed-origin-url js/process.env.ALLOWED_ORIGIN_URL)
 (def recaptcha-secret js/process.env.RECAPTCHA_SECRET)
 (def recaptcha-sitekey js/process.env.RECAPTCHA_SITEKEY)
+(def comment-table-name js/process.env.COMMENT_TABLE_NAME)
 
 (def htmx-config
   (htmx/make-htmx-config
     {:repo :dynamo
+     :comment-table-name comment-table-name
      :recaptcha-sitekey recaptcha-sitekey
      :post-comment-url (str lambda-base-url "/comments")}))
 

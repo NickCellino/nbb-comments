@@ -26,11 +26,27 @@
       ", "
       date-year)))
 
+(apply some (juxt nil? empty?) "")
+(apply some (juxt nil? empty?) "foo")
+(reduce #(or %1 %2) [false true])
+(reduce #(or %1 %2) [false false])
+
+(defn any
+  [preds val]
+  (let [pred-fn (apply juxt preds)
+        pred-results (pred-fn val)]
+    (reduce #(or %1 %2) pred-results)))
+
+(comment
+  (any [nil? empty?] "") ; true
+  (any [nil? empty?] nil) ; true
+  (any [nil? empty?] "foo")) ; false
+
 (defn serialize-comment
   [comment-body]
-  (let [author (if (not (nil? (:author comment-body)))
-                 (:author comment-body)
-                 "Anonymous")
+  (let [author (if (any [nil? empty?] (:author comment-body))
+                 "Anonymous"
+                 (:author comment-body))
         author-section [:p {:class "name"} [:strong author] "said..."]
         message-section [:p {:class "message"} (:message comment-body)]
         date-section [:p {:class "datetime"} (format-iso-date (:time comment-body))]]

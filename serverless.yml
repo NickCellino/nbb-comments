@@ -29,8 +29,30 @@ functions:
       ALLOWED_ORIGIN_URL: "http://localhost:8080"
       RECAPTCHA_SECRET: ${env:RECAPTCHA_SECRET}
       RECAPTCHA_SITEKEY: "6LcMAZQhAAAAAJKuFrianjr-xP8XIOysos4qeR4S"
+      COMMENT_TABLE_NAME: !Ref CommentDynamoTable
     events:
       - httpApi:
           method: '*'
           path: /{proxy+}
+
+resources:
+  Resources:
+    CommentDynamoTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: "Comment"
+        AttributeDefinitions:
+          - AttributeName: PostId
+            AttributeType: S
+          - AttributeName: CommentId
+            AttributeType: S
+        KeySchema:
+          - KeyType: HASH
+            AttributeName: PostId
+          - KeyType: RANGE
+            AttributeName: CommentId
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+
 
