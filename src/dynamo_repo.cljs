@@ -34,7 +34,8 @@
    :CommentId {:S (uuid/v4)}
    :Message {:S (:message comment-input)}
    :Time {:S (.toISOString (js/Date.))}
-   :Author {:S (:author comment-input)}})
+   :Author {:S (:author comment-input)}
+   :RecaptchaScore {:S (str (:score comment-input))}})
 
 (defn add-comment
   [{:keys [comment-table-name] } new-comment]
@@ -74,7 +75,6 @@
   (p/let [client (dynamo/DynamoDBClient. {:region "us-east-1"})
           js-comments (list-dynamo-comments client comment-table-name post-id)
           clj-comments (:Items (bean/->clj js-comments))]
-    (.log js/console js-comments)
     (reverse (sort-by :time (map de-dynamoify-comment clj-comments)))))
 
 (defmethod repo/get-comments :dynamo

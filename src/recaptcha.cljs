@@ -15,8 +15,8 @@
     (if (not success)
       (do
         (.log js/console "Recaptcha verify failed:" data)
-        false)
+        {:verified false})
       (let [score (aget data "score")]
         (.log js/console "Recaptcha score:" score)
-        (> score threshold)))))
+        {:verified (> score threshold) :score score}))))
 

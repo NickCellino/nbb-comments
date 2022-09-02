@@ -71,7 +71,7 @@
     :hx-post post-comment-url
     :hx-swap "afterbegin"
     :hx-target (str "#" comment-list-div-id)
-    :hx-trigger recaptcha-callback-event
+    :hx-trigger (if recaptcha-sitekey (str recaptcha-callback-event ",submit") "submit")
     :hx-swap-oob "true"}
    [:input {:type "hidden" :name "post-id" :value post-id}]
    [:label {:for "author"} "Name (optional)"]

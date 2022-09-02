@@ -42,17 +42,24 @@
       (.send res list-comments-response))))
 
 (defn post-comment-handler
-  [{:keys [htmx-config recaptcha-secret recaptcha-threshold]}]
+  [{:keys [htmx-config recaptcha-secret recaptcha-threshold recaptcha-enabled]}]
   (fn [req res] 
     (p/let [payload-config [{:type :body :name "author" :required true}
                             {:type :body :name "message" :required true}
-                            {:type :body :name "post-id" :required true}
-                            {:type :body :name "g-recaptcha-response" :required true}]
+                            {:type :body :name "post-id" :required true}]
+            payload-config (if recaptcha-enabled
+                             (conj payload-config {:type :body :name "g-recaptcha-response" :required true})
+                             payload-config)
             payload (extract-params payload-config req)
-            add-comment-response (htmx/post-comment htmx-config payload)
-            verified (recaptcha/verify (:g-recaptcha-response payload) recaptcha-threshold recaptcha-secret)]
+            {:keys [verified score]} (if (not recaptcha-enabled)
+                                       {:verified true}
+                                       (recaptcha/verify
+                                         (:g-recaptcha-response payload)
+                                         recaptcha-threshold
+                                         recaptcha-secret))]
       (if verified
-        (.send res add-comment-response)
+        (p/let [add-comment-response (htmx/post-comment htmx-config (assoc payload :score score))]
+          (.send res add-comment-response))
         (.send res "Uh oh. Recaptcha failed. Are you a robot?")))))
 
 (defn get-comments-form-handler
@@ -65,7 +72,8 @@
 (defn make-express-config
   [user-config]
   (let [defaults {:allowed-origin-url "http://localhost:8080"
-                  :recaptcha-threshold 0.5}]
+                  :recaptcha-threshold 0.5
+                  :recaptcha-enabled true}]
     (merge defaults user-config)))
 
 (defn create-app
