@@ -114,7 +114,7 @@ If you can see that, your backend is all set!
     ```html
     <form
       id="comment-form"
-      hx-get="<your-backend-url>//localhost:3000/comments-form?post-id=example-post-id"
+      hx-get="<your-backend-url>/comments-form?post-id=example-post-id"
       hx-trigger="load">
     </form>
     ```
