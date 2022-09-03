@@ -118,6 +118,8 @@ If you can see that, your backend is all set!
       hx-trigger="load">
     </form>
     ```
+    
+    For this step and the next, you should specify a value for the post-id query parameter that is specific to whatever page you are adding this functionality to. If you add this to a different page, you would use a different post-id in order to have a separate comment thread per-page.
 
 3. Add the comments list (where the comemnts will actually be displayed) somewhere on your page like so (replacing *your-backend-url* with the proper value for your backend):
     ```html
@@ -149,8 +151,7 @@ You can also run [the dev server](#running-server-locally) to play around with t
   hx-swap="afterbegin"
   hx-target="#comments-list"
   hx-trigger="submit"
-  hx-swap-oob="true"
-  class="">
+  hx-swap-oob="true">
 
   <input type="hidden" name="post-id" value="example-post-id">
   <label for="author">Name (optional)</label>
