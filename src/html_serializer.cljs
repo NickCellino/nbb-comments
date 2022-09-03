@@ -54,9 +54,8 @@
 
 (defn serialize-comment-list
   [comments]
-  (let [serialized-comments (map serialize-comment comments)]
-    [:div {:id "comment-list"} serialized-comments]))
- 
+  (map serialize-comment comments))
+
 (comment
   (html [:p {:class "name"} "<div>hello world</div>"])
   (html [:p {:class "name"} [:strong "nick"] "said..."])

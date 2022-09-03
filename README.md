@@ -1,14 +1,24 @@
 # nbb-comments
 
-This is a solution for adding comments functionality to any HTML page.
+A service for adding basic comment functionality to any blog post/webpage (built with [nbb](https://github.com/babashka/nbb), AWS Lambda, and DynamoDB). Visitors to your site can leave a comment and view others' comments.
 
-You can easily [deploy it](#deploy-your-own-instance) to your own AWS account. Or you can [play around with it running locally](#running-server-locally). Or you can see it in action [here](https://nickcellino.com/blog/2022-08-07-clojure-bandits.html) (scroll to the bottom)!
+You can:
+- [Deploy it](#deploy-your-own-instance) to your own AWS account
+- [Run it locally](#running-server-locally) to poke around and see how it works
+- [See it in action](https://nickcellino.com/blog/2022-08-07-clojure-bandits.html) (scroll to the bottom of the linked page)
 
-## Introduction
+## Why
 
-The backend is an AWS Lambda function that uses DynamoDB for storage. 
+I wanted to allow people visiting [my personal blog](https://nickcellino.com) to be able to leave comments without creating any sort of account/login. I used Google reCAPTCHA v3 to prevent bot abuse.
 
-Once you deploy your backend, adding it to a blog page is as simple as:
+## Overview
+
+`nbb-comments` uses an AWS Lambda function (backed by DynamoDB) to serve HTTP requests to:
+- add a new comment for a certain blog post
+- list existing comments for a certain blog post
+- retrieve the HTML to render the comments form
+
+Once you deploy your backend, adding it to any webpage is as simple as:
 ```html
 <!-- add this to <head> -->
 <script src="https://unpkg.com/htmx.org@1.8.0" async></script>
@@ -20,11 +30,6 @@ Once you deploy your backend, adding it to a blog page is as simple as:
 <h2>Comments</h2>
 <div id="comments-list" hx-get="https://<your-deployed-lambda-url>/comments?post-id=example-post-id" hx-swap"innerHTML" hx-trigger="load"></div>
 ```
-
-It is built using [nbb](https://github.com/babashka/nbb), [htmx](https://htmx.org/), AWS Lambda, Serverless Framework, and DynamoDB.
-
-Users are allowed to leave comments anonymously, but [Google reCAPTCHA v3](https://developers.google.com/recaptcha/docs/v3) is used to provde some protection against bot abuse.
-
 
 ## Running server locally
 
@@ -120,3 +125,98 @@ If you can see that, your backend is all set!
 
 Once you have done that, you are all set to receive brilliant insights from random strangers on the internet!
 
+You can find a minimal working example of this [here](./src/dev/index.html).
+
+## Styling
+
+The HTML snippets above will load HTML from the server and render it onto the page.
+You will need to know what that rendered HTML looks like in order to style it.
+
+You can also run [the dev server](#running-server-locally) to play around with the styling.
+
+#### Rendered "add comment" form example
+
+```html
+<form
+  id="comment-form"
+  hx-post="http://localhost:3000/comments"
+  hx-swap="afterbegin"
+  hx-target="#comments-list"
+  hx-trigger="submit"
+  hx-swap-oob="true"
+  class="">
+
+  <input type="hidden" name="post-id" value="example-post-id">
+  <label for="author">Name (optional)</label>
+  <input type="text" name="author" id="author-input" hx-swap-oob="true">
+  <label for="message">Comment</label>
+  <textarea name="message" required="true" rows="5" id="message-input" hx-swap-oob="true"></textarea>
+
+  <script>
+    function announce(token) {
+      const event = new Event('recaptcha-verified');
+      const elem = document.querySelector('#comment-form');
+      elem.dispatchEvent(event);
+    }
+  </script>
+  <script src="https://www.google.com/recaptcha/api.js"></script>
+
+  <button type="submit">Submit</button>
+
+</form>
+```
+
+#### Rendered comment list example
+
+```html
+<div
+  id="comments-list"
+  hx-get="http://localhost:3000/comments?post-id=example-post-id"
+  hx-swap="innerhtml"
+  hx-trigger="load">
+ 
+  <div class="comment">
+    <p class="name">
+      <strong>Anonymous</strong> said...
+    </p>
+    <p class="message">Hi there</p>
+    <p class="datetime">20:22, September 2, 2022</p>
+  </div>
+
+  <div class="comment">
+    <p class="name">
+      <strong>Nick</strong> said...
+    </p>
+    <p class="message">Great post, Nick!</p>
+    <p class="datetime">20:21, September 2, 2022</p>
+  </div>
+
+</div>
+```
+
+#### Styling example
+
+There is a very, very basic example of styling in [the example HTML](./src/dev/index.html).
+
+```html
+<style>
+  .comment {
+    border-bottom: 1px solid;
+  }
+
+  input, textarea {
+    width: 100%;
+    margin-bottom: 5px;
+  }
+
+  button {
+    margin-top: 5px;
+  }
+</style>
+```
+
+That will result in this magnificance:
+
+![example.png](./example.png)
+
+Please, hold your applause.
