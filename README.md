@@ -22,6 +22,8 @@ I wanted to allow people visiting [my personal blog](https://nickcellino.com) to
 - list existing comments for a certain blog post
 - retrieve the HTML to render the comments form
 
+It uses [htmx](https://htmx.org/) to handle interactions with the server and make dynamic updates to the DOM without reloading the page.
+
 Once you deploy your backend, adding it to any webpage is as simple as:
 ```html
 <!-- add this to <head> -->
