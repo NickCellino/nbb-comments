@@ -9,7 +9,7 @@ A service for adding basic comment functionality to any blog post/webpage. Visit
 You can:
 - [Deploy it](#using-it-on-your-own-site) to your own AWS account to use it on your own site
 - [Run it locally](#running-server-locally) to poke around and see how it works
-- [See it in action](https://nickcellino.com/blog/2022-08-07-clojure-bandits.html) (scroll to the bottom of the linked page)
+- [See it in action](https://nickcellino.com/blog/2022-09-03-nbb-comments.html) (scroll to the bottom of the linked page)
 
 ## Why
 
@@ -225,5 +225,3 @@ There is a very, very basic example of styling in [the example HTML](./src/dev/i
 That will result in this magnificence:
 
 ![example.png](./example.png)
-
-Please, hold your applause.

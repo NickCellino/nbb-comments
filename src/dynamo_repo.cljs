@@ -5,22 +5,6 @@
             [cljs-bean.core :as bean]
             [repo]))
 
-(defn create-comment-table
-  [] (let [cmd-input {:TableName "BlogComment"
-                      :AttributeDefinitions [{:AttributeName "PostId"
-                                              :AttributeType "S"}
-                                             {:AttributeName "CommentId"
-                                              :AttributeType "S"}]
-                      :KeySchema [{:KeyType "HASH"
-                                   :AttributeName "PostId"}
-                                  {:KeyType "RANGE"
-                                   :AttributeName "CommentId"}]
-                      :ProvisionedThroughput {:ReadCapacityUnits 1
-                                              :WriteCapacityUnits 1}}
-           cmd (dynamo/CreateTableCommand. (bean/->js cmd-input))
-           client (dynamo/DynamoDBClient. {:region "us-east-1"})]
-        (.send client cmd)))
-
 (defn add-dynamo-comment
   [client comment-table-name payload]
   (let [cmd-input {:TableName comment-table-name
@@ -81,6 +65,3 @@
   [config post-id]
   (list-comments config post-id))
 
-(comment
-  (p/let [cmts (list-comments {:comment-table-name "Comment"} "test-post")]
-    (def c cmts)))
