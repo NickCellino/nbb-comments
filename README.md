@@ -1,9 +1,13 @@
 # nbb-comments
 
-A service for adding basic comment functionality to any blog post/webpage (built with [nbb](https://github.com/babashka/nbb), AWS Lambda, and DynamoDB). Visitors to your site can leave a comment and view others' comments.
+A service for adding basic comment functionality to any blog post/webpage. Visitors to your site can leave comments and view others' comments.
+
+- Built with [nbb](https://github.com/babashka/nbb)
+- Deployed on AWS Lambda using [Serverless Framework](https://www.serverless.com/)
+- Uses DynamoDB for storage
 
 You can:
-- [Deploy it](#deploy-your-own-instance) to your own AWS account
+- [Deploy it](#using-it-on-your-own-site) to your own AWS account to use it on your own site
 - [Run it locally](#running-server-locally) to poke around and see how it works
 - [See it in action](https://nickcellino.com/blog/2022-08-07-clojure-bandits.html) (scroll to the bottom of the linked page)
 
@@ -215,7 +219,7 @@ There is a very, very basic example of styling in [the example HTML](./src/dev/i
 </style>
 ```
 
-That will result in this magnificance:
+That will result in this magnificence:
 
 ![example.png](./example.png)
 
